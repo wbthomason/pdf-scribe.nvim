@@ -94,13 +94,13 @@ function! pdfscribe#init_notes(pdf_name) abort
   let l:pdf_path = printf('%s/%s', g:pdfscribe_pdf_dir, l:pdf_name)
   let l:pdf_info = luaeval("require('pdfscribe').get_all_info(_A)", l:pdf_path)
   edit l:notes_path
-  if exists('*' . g:pdfscribe_note_formatter)
+  if exists('g:pdfscribe_note_formatter') && type(g:pdfscribe_note_formatter) == v:t_func
     let l:formatted_notes = call(g:pdfscribe_note_formatter, l:pdf_info['annotations'])
   else
     let l:formatted_notes = map(copy(l:pdf_info['annotations']), function('s:template_note'))
   endif
 
-  if exists('*' . g:pdfscribe_file_formatter)
+  if exists('g:pdfscribe_file_formatter') && type(g:pdfscribe_file_formatter) == v:t_func
     let l:formatted_contents = call(g:pdfscribe_file_formatter, [l:pdf_info, l:formatted_notes])
   else
     let l:formatted_contents = s:template_file(l:pdf_info, l:formatted_notes)

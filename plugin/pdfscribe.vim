@@ -22,7 +22,7 @@ if !exists('g:pdfscribe_date_format')
   let g:pdfscribe_date_format = '%y/%d/%m'
 endif
 
-if !exists('g:pdfscribe_note_template') && !exists('*' . g:pdfscribe_note_formatter)
+if !exists('g:pdfscribe_note_template') && !(exists('g:pdfscribe_note_formatter') && type(g:pdfscribe_note_formatter) == v:t_func)
   let g:pdfscribe_note_template =<< trim END
     - (*${modified}*, page ${page}):${-selected_text: ${contents}-}
     ${+selected_text:  > ${selected_text}+}
@@ -30,7 +30,7 @@ if !exists('g:pdfscribe_note_template') && !exists('*' . g:pdfscribe_note_format
     END
 endif
 
-if !exists('g:pdfscribe_file_template') && !exists('*' . g:pdfscribe_file_formatter)
+if !exists('g:pdfscribe_file_template') && !(exists('g:pdfscribe_file_formatter') && type(g:pdfscribe_file_formatter) == v:t_func)
   let g:pdfscribe_file_template =<< trim END
   # ${title}${+author: (${author})+}
   ${date}
