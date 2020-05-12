@@ -152,4 +152,6 @@ ffi.cdef[[
   char * poppler_annot_get_contents(PopplerAnnot *poppler_annot);
   char * poppler_annot_get_modified(PopplerAnnot *poppler_annot);
   GArray * poppler_annot_text_markup_get_quadrilaterals(PopplerAnnotTextMarkup *poppler_annot);
+
+  int poppler_date_parse(const char *date, time_t *timet);
 ]]

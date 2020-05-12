@@ -52,6 +52,16 @@ local function try_open(pdf_file_path)
   return pdf
 end
 
+local function clean_mod_date(mod_date)
+  local datetime = ffi.new('time_t[1]', 0)
+  if not poppler.poppler_date_parse(mod_date, datetime) then
+    log_error('Failed to parse modified date string!')
+    return nil
+  end
+
+  return os.date('%Y/%d/%m', tonumber(datetime))
+end
+
 function PDF:get_pages()
   if self.pdf_pages then
     return self.pdf_pages
@@ -206,7 +216,11 @@ function PDF:get_annotations()
     local annot_mappings = _annot_mappings
     while annot_mappings ~= ffi.NULL do
       local annot_mapping = ffi.cast('PopplerAnnotMapping*', annot_mappings.data)
-      local annotation = { page_idx = i, page_label = page_label }
+      local annotation = {
+        page_idx = i,
+        page_label = page_label,
+        page_num = page_label and page_label or i
+      }
       local annotation_data = annot_mapping.annot
       local annotation_type = poppler.poppler_annot_get_annot_type(annotation_data)
       if
@@ -254,6 +268,7 @@ function PDF:get_annotations()
 
         local mod_date_raw = poppler.poppler_annot_get_modified(annotation_data)
         annotation.mod_date = ffi.string(mod_date_raw)
+        annotation.modified = clean_mod_date(mod_date_raw)
         glib.g_free(mod_date_raw)
         table.insert(annots, annotation)
       end
@@ -284,6 +299,43 @@ local M = { }
 M.PDF = PDF
 M.load_pdf = function(pdf_file_path)
   return PDF:load(pdf_file_path)
+end
+
+M.get_all_info = function(pdf_file_path)
+  local pdf = PDF:load(pdf_file_path)
+  if pdf then
+    local result = { file = pdf_file_path }
+    local author = pdf:get_author()
+    if author then
+      result.author = author
+    end
+
+    local keywords = pdf:get_keywords()
+    if keywords then
+      result.keywords = keywords
+    end
+
+    result.title = pdf:get_title()
+    local links = pdf:get_external_links()
+    if links then
+      result.links = links
+    end
+
+    result.annotations = pdf:get_annotations()
+
+    return result
+  end
+
+  return {}
+end
+
+M.get_annotations = function(pdf_file_path)
+  local pdf = PDF:load(pdf_file_path)
+  if pdf then
+    return pdf:get_annotations()
+  end
+
+  return {}
 end
 
 return M
