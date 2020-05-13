@@ -9,7 +9,7 @@ and `GLib` installed on your machine.
 
 ## Installation
 
-Use your preferred Neovim package manager. With
+Once you have the dependencies installed, use your preferred Neovim package manager. With
 [`vim-packager`](https://github.com/kristijanhusak/vim-packager), this looks like:
 ```vim
 call packager#add('wbthomason/pdf-scribe.nvim')
@@ -17,12 +17,33 @@ call packager#add('wbthomason/pdf-scribe.nvim')
 
 ## Usage
 
-Forthcoming!
+`pdf-scribe` is **(a)** a (mostly) Neovim-agnostic LuaJIT library for extracting information (title,
+author, keywords, external links) and (highlight, pop-up) annotations from PDFs, and **(b)** a Neovim
+plugin serving as an example use of the library/a hopefully good out-of-the-box experience for
+general users.
+
+For **(a)**, the best documentation is [the code](lua/pdfscribe.lua). The short version is that the
+module `pdfscribe` provides a function `load_pdf(pdf_file_path)` which returns a `PDF` object for a
+given PDF file path. The `PDF` object has methods to extract the aforementioned information and
+annotations from its PDF file. There are also convenience functions provided by the `pdfscribe`
+module to get just annotations from a PDF (`get_annotations(pdf_file_path)`) and to get **all** info
+from  a file (`get_all_info(pdf_file_path)`).
+
+You can use the `pdfscribe` library to write your own PDF manipulation plugins.
+
+**(b)** is designed to cover the most common imagined use case for `pdfscribe`: creating and
+updating plain-text notes on PDF files. See [the docs](docs/pdfscribe.txt) for complete information.
+The short version is that there are two commands provided: `:PdfScribeInit` to create a notes file
+and `:PdfScribeUpdateNotes` to re-extract annotations and update the file. Both commands use
+configurable templates with primitive conditional value substitution to generate files in whatever
+format you prefer.
 
 ### Example Configuration
 
-Forthcoming!
+The only values you **must** configure are `g:pdfscribe_pdf_dir` and `g:pdfscribe_notes_dir`, which
+set the directory in which `pdfscribe` looks for your PDF files and for your notes files,
+respectively. See [the docs](docs/pdfscribe.txt) for more complete information.
 
 ## Notes
-- Incidentally, the core PDF library only depends on Neovim for logging errors. The rest of it is
-  portably reusable in any LuaJIT environment.
+Incidentally, the core PDF library only depends on Neovim for checking if files exist. The rest of
+it is portably reusable in any LuaJIT environment.
