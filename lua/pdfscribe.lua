@@ -5,6 +5,15 @@ local function log_error(msg)
   io.stderr:write('[pdfscribe] ' .. msg .. '\n')
 end
 
+local function split(str, pat)
+  local result = {}
+  for elem in string.gmatch(str, '([^' .. pat .. ']+)') do
+    table.insert(result, elem)
+  end
+
+  return result
+end
+
 if vim then
   local api = vim.api
   log_error = function(msg)
@@ -12,6 +21,8 @@ if vim then
     api.nvim_command('echom "[pdfscribe] ' .. msg .. '"')
     api.nvim_command('echohl None')
   end
+
+  split = vim.fn.split
 end
 
 require('pdfscribe/cdefs')
@@ -24,18 +35,26 @@ local PDF = {}
 local function try_open(pdf_file_path)
   if pdf_file_path == nil then
     log_error('Nil PDF path!')
-    return
+    return nil
   end
 
   local err = ffi.new('GError*[1]', ffi.NULL)
-  local current_dir = glib.g_get_current_dir()
-  local absolute_pdf_path = glib.g_build_filename(current_dir, pdf_file_path, ffi.NULL)
-  local pdf_file_uri = glib.g_filename_to_uri(absolute_pdf_path, ffi.NULL, err)
-  glib.g_free(current_dir)
-  glib.g_free(absolute_pdf_path)
+  local pdf_file_uri = nil
+  if vim.fn.filereadable(pdf_file_path) then
+    pdf_file_uri = glib.g_filename_to_uri(pdf_file_path, ffi.NULL, err)
+  else
+    local current_dir = glib.g_get_current_dir()
+    local absolute_pdf_path = glib.g_build_filename(current_dir, pdf_file_path, ffi.NULL)
+    glib.g_free(current_dir)
+    glib.g_free(absolute_pdf_path)
+    pdf_file_uri = glib.g_filename_to_uri(absolute_pdf_path, ffi.NULL, err)
+  end
+
   if pdf_file_uri == ffi.NULL then
     log_error(ffi.string(err[0].message))
-    glib.g_object_unref(err[0])
+    print('Just before GC')
+    -- if err[0] ~= ffi.NULL then glib.g_object_unref(err[0]) end
+    print('Just after GC')
     return nil
   end
 
@@ -43,7 +62,7 @@ local function try_open(pdf_file_path)
   glib.g_free(pdf_file_uri)
   if pdf == ffi.NULL then
     log_error(ffi.string(err[0].message))
-    glib.g_object_unref(err[0])
+    if err[0] ~= ffi.NULL then glib.g_object_unref(err[0]) end
     return nil
   end
 
@@ -53,7 +72,7 @@ local function try_open(pdf_file_path)
 end
 
 local function clean_mod_date(mod_date)
-  local datetime = ffi.new('time_t[1]', 0)
+  local datetime = ffi.new('int[1]', 0)
   if not poppler.poppler_date_parse(mod_date, datetime) then
     log_error('Failed to parse modified date string!')
     return nil
@@ -219,7 +238,7 @@ function PDF:get_annotations()
       local annotation = {
         page_idx = i,
         page_label = page_label,
-        page_num = page_label and page_label or i
+        page = page_label and page_label or i
       }
       local annotation_data = annot_mapping.annot
       local annotation_type = poppler.poppler_annot_get_annot_type(annotation_data)
@@ -230,7 +249,7 @@ function PDF:get_annotations()
       then
         local contents_raw = poppler.poppler_annot_get_contents(annotation_data)
         if contents_raw ~= ffi.NULL then
-          annotation.contents = ffi.string(contents_raw)
+          annotation.contents = split(ffi.string(contents_raw), '\n')
           glib.g_free(contents_raw)
         end
 
