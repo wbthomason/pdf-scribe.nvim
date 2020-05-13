@@ -136,7 +136,7 @@ endfunction
 function! pdfscribe#init_notes(pdf_name) abort
   if a:pdf_name ==# ''
     " If no argument was given, assume the paper is named the same thing as the current buffer
-    let l:pdf_name = expand('%:t:r')
+    let l:pdf_name = expand('%:t:r') . '.pdf'
     let l:notes_path = expand('%:p')
   else
     let l:pdf_name = a:pdf_name
@@ -147,7 +147,7 @@ function! pdfscribe#init_notes(pdf_name) abort
   let l:pdf_info = luaeval("require('pdfscribe').get_all_info(_A)", l:pdf_path)
   if empty(l:pdf_info)
     echohl WarningMsg
-    echom '[pdfscribe] No PDF info for ' . l:pdf_path . '!'
+    echom '[pdfscribe] No PDF info for ' . fnamemodify(l:pdf_path, ':~:.') . '!'
     echohl None
     return
   endif
@@ -179,7 +179,7 @@ endfunction
 function! pdfscribe#update_notes(file_name) abort
   if a:file_name ==# ''
     " If no argument was given, assume the paper is named the same thing as the current buffer
-    let l:pdf_name = expand('%:t:r')
+    let l:pdf_name = expand('%:t:r') . '.pdf'
     let l:notes_path = expand('%:p')
   else
     let l:pdf_name = fnamemodify(a:file_name, ':t:r') . '.pdf'
@@ -195,7 +195,7 @@ function! pdfscribe#update_notes(file_name) abort
     return
   endif
 
-  if exists('*' . g:pdfscribe_note_formatter)
+  if exists('g:pdfscribe_note_formatter') && type(g:pdfscribe_note_formatter) == v:t_func
     let l:formatted_notes = call(g:pdfscribe_note_formatter, l:annotations)
   else
     let l:formatted_notes = map(l:annotations, function('s:template_note'))
@@ -212,5 +212,11 @@ function! pdfscribe#update_notes(file_name) abort
     let l:notes_section_end_line = -1
   endif
 
+  let l:flattened_notes = []
+  for note in l:formatted_notes
+    call extend(l:flattened_notes, note)
+  endfor
+
+  let l:formatted_notes = l:flattened_notes
   call nvim_buf_set_lines(0, l:notes_section_line + 1, l:notes_section_end_line, v:false, l:formatted_notes)
 endfunction

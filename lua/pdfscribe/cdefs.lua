@@ -24,8 +24,8 @@ ffi.cdef[[
   char * g_build_filename(const char* first_element, ...);
   char * g_filename_to_uri(const char* filename, const char *hostname, GError **error);
   char * g_get_current_dir(void);
-  void  g_object_unref(void *);
-  void * g_free(void *);
+  void g_object_unref(void *);
+  void g_free(void *);
 
   // Poppler types
   typedef struct _PopplerPage PopplerPage;

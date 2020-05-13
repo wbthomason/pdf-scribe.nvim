@@ -52,9 +52,6 @@ local function try_open(pdf_file_path)
 
   if pdf_file_uri == ffi.NULL then
     log_error(ffi.string(err[0].message))
-    print('Just before GC')
-    -- if err[0] ~= ffi.NULL then glib.g_object_unref(err[0]) end
-    print('Just after GC')
     return nil
   end
 
@@ -62,7 +59,6 @@ local function try_open(pdf_file_path)
   glib.g_free(pdf_file_uri)
   if pdf == ffi.NULL then
     log_error(ffi.string(err[0].message))
-    if err[0] ~= ffi.NULL then glib.g_object_unref(err[0]) end
     return nil
   end
 
