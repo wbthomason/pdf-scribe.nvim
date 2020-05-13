@@ -73,6 +73,9 @@ function! s:apply_template(template, data) abort
     let l:tpl[idx] = substitute(l:tpl[idx], s:data_field_pattern, b:string_data_sub, 'g')
   endfor
 
+  " Strip unintentional empty lines
+  call filter(l:tpl, "v:val !=# '' || index(l:empties, v:key) >= 0")
+
   " Now, splice in list items (e.g. notes)
   let start = 0
   let data_field_idx = match(l:tpl, s:data_field_pattern)
@@ -102,12 +105,10 @@ function! s:apply_template(template, data) abort
     let data_field_idx = match(l:tpl, s:data_field_pattern, start)
   endwhile
 
-  if start < len(l:tpl) - 1
+  if start < len(l:tpl)
     call extend(l:result, l:tpl[start :])
   endif
 
-  " Strip unintentional empty lines
-  call filter(l:result, "v:val !=# '' || index(l:empties, v:key) >= 0")
   return l:result
 endfunction
 
@@ -115,7 +116,7 @@ function! s:template_file(pdf_info, formatted_notes) abort
   let l:data = extend(a:pdf_info, {
         \ 'notes': a:formatted_notes,
         \ 'date': strftime(g:pdfscribe_date_format),
-        \ 'notes_marker': g:pdfscribe_notes_marker,
+        \ 'notes_marker': g:pdfscribe_notes_marker
         \})
   if exists('g:pdfscribe_notes_end_marker')
     let l:data['notes_end_marker'] = g:pdfscribe_notes_end_marker

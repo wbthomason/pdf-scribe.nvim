@@ -19,19 +19,16 @@ if !exists('g:pdfscribe_notes_marker')
 endif
 
 if !exists('g:pdfscribe_notes_end_marker')
-  let g:pdfscribe_notes_end_marker =<< trim END
-
-  ## Links
-  END
+  let g:pdfscribe_notes_end_marker = '## Links'
 endif
 
 if !exists('g:pdfscribe_date_format')
-  let g:pdfscribe_date_format = '%y/%d/%m'
+  let g:pdfscribe_date_format = '%y/%m/%d'
 endif
 
 if !exists('g:pdfscribe_note_template') && !(exists('g:pdfscribe_note_formatter') && type(g:pdfscribe_note_formatter) == v:t_func)
   let g:pdfscribe_note_template =<< trim END
-- (*${modified}*, page ${page}):${-selected_text: ${contents}-}
+- *(Page ${page})*${-selected_text: ${contents}-}${+selected_text::+}
 ${+selected_text:  > ${selected_text}+}
 ${+selected_text&contents:  ${contents}+}
 
@@ -45,13 +42,14 @@ ${+author:(${author})+}
 @${file_name}
 ${+keywords:Keywords: ${keywords}+}
 
-Notes created: ${date}
+*Notes created: ${date}*
 
 ## Main Idea
 
 ${notes_marker}
 ${notes}
 ${+links:${notes_end_marker}+}
+${+links:''+}
 ${+links:${links}+}
 END
 endif
