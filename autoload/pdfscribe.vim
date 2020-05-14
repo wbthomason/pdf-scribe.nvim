@@ -205,7 +205,7 @@ function! pdfscribe#update_notes(file_name) abort
     let l:notes_path = expand('%:p')
   else
     let l:pdf_name = fnamemodify(a:file_name, ':t:r') . '.pdf'
-    let l:notes_path = printf('%s/%s.%s', g:pdfscribe_notes_dir, l:pdf_name, g:pdfscribe_notes_extension)
+    let l:notes_path = printf('%s/%s.%s', g:pdfscribe_notes_dir, fnamemodify(a:file_name, ':t:r'), g:pdfscribe_notes_extension)
   endif
 
   let l:pdf_path = expand(printf('%s/%s', g:pdfscribe_pdf_dir, l:pdf_name))
@@ -240,5 +240,5 @@ function! pdfscribe#update_notes(file_name) abort
   endfor
 
   let l:formatted_notes = l:flattened_notes
-  call nvim_buf_set_lines(0, l:notes_section_line + 1, l:notes_section_end_line, v:false, l:formatted_notes)
+  call nvim_buf_set_lines(0, l:notes_section_line, l:notes_section_end_line, v:false, l:formatted_notes)
 endfunction
