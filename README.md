@@ -2,8 +2,6 @@
 
 A Neovim plugin for importing annotations and metadata from PDFs
 
-[[_TOC_]]
-
 ## Dependencies
 
 You will need `LuaJIT` (if you're using this with Neovim, it's baked in), `poppler-glib`, `GObject`,
