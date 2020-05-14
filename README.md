@@ -18,9 +18,9 @@ call packager#add('wbthomason/pdf-scribe.nvim')
 ## Usage
 
 `pdf-scribe` is **(a)** a (mostly) Neovim-agnostic LuaJIT library for extracting information (title,
-author, keywords, external links) and (highlight, pop-up) annotations from PDFs, and **(b)** a Neovim
-plugin serving as an example use of the library/a hopefully good out-of-the-box experience for
-general users.
+author, keywords, external links) and (highlight, underline, and pop-up) annotations from PDFs, and
+**(b)** a Neovim plugin serving as an example use of the library/a hopefully good out-of-the-box
+experience for general users.
 
 For **(a)**, the best documentation is [the code](lua/pdfscribe.lua). The short version is that the
 module `pdfscribe` provides a function `load_pdf(pdf_file_path)` which returns a `PDF` object for a
