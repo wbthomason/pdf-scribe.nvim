@@ -74,7 +74,12 @@ local function clean_mod_date(mod_date)
     return nil
   end
 
-  return os.date('%Y/%m/%d', tonumber(datetime))
+  local date_format = '%Y/%m/%d'
+  if vim then
+    date_format = vim.g.pdfscribe_date_format
+  end
+
+  return os.date(date_format, tonumber(datetime))
 end
 
 function PDF:get_pages()

@@ -122,7 +122,7 @@ A string describing the format you would like `pdfscribe.nvim` to use for
 dates in your notes files. Passed to |strftime()|; must be a valid format
 string for the same.
 
-Default: `'%y/%m/%d'`
+Default: `'%Y/%m/%d'`
 
 *g:pdfscribe_note_template*
 A list of strings describing the lines of a template for an extracted
@@ -180,7 +180,7 @@ annotations, with the structure: >
     contents: String (if defined),
     selected_text: String (if defined),
     mod_date: String (raw PDF-format date string),
-    modified: String (mod_date formatted by Lua's `os.date` per `'%Y/%m/%d'`)
+    modified: String (mod_date formatted by Lua's `os.date` per |g:pdfscribe_date_format|)
   }
 
 The function must return a list of lists of formatted strings, to be used as
@@ -257,7 +257,7 @@ For note templates:
 - `mod_date`: the raw PDF date string at which the annotation was last
   modified
 - `modified`: the date at which the annotation was last modified formatted
-  according to `'%Y/%m/%d'`
+  according to |g:pdfscribe_date_format|
 
 For file templates:
 - `title`: the title of the PDF

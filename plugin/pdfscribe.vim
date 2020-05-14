@@ -23,7 +23,7 @@ if !exists('g:pdfscribe_notes_end_marker')
 endif
 
 if !exists('g:pdfscribe_date_format')
-  let g:pdfscribe_date_format = '%y/%m/%d'
+  let g:pdfscribe_date_format = '%Y/%m/%d'
 endif
 
 if !exists('g:pdfscribe_note_template') && !(exists('g:pdfscribe_note_formatter') && type(g:pdfscribe_note_formatter) == v:t_func)
