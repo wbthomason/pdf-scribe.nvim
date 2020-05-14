@@ -74,7 +74,7 @@ local function clean_mod_date(mod_date)
     return nil
   end
 
-  return os.date('%Y/%d/%m', tonumber(datetime))
+  return os.date('%Y/%m/%d', tonumber(datetime))
 end
 
 function PDF:get_pages()
@@ -176,7 +176,7 @@ function PDF:get_external_links()
       if link_action.type == poppler.POPPLER_ACTION_URI then
         link_action = link_action.uri
         local title_raw = link_action.title
-        local action = { uri = ffi.string(link_action.uri) }
+        local action = { dest = ffi.string(link_action.uri) }
         if title_raw ~= ffi.NULL then
           action.title = ffi.string(title_raw)
         end
@@ -185,7 +185,7 @@ function PDF:get_external_links()
       elseif link_action.type == poppler.POPPLER_ACTION_GOTO_REMOTE then
         link_action = link_action.goto_remote
         local title_raw = link_action.title
-        local action = { file_name = ffi.string(link_action.file_name) }
+        local action = { dest = ffi.string(link_action.file_name) }
         if title_raw ~= ffi.NULL then
           action.title = ffi.string(title_raw)
         end
