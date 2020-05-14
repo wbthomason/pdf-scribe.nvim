@@ -7,6 +7,8 @@ A Neovim plugin for importing annotations and metadata from PDFs
 You will need `LuaJIT` (if you're using this with Neovim, it's baked in), `poppler-glib`, `GObject`,
 and `GLib` installed on your machine.
 
+If you're using Neovim, it needs to be v0.4.3+ (I think - might need to be later).
+
 ## Installation
 
 Once you have the dependencies installed, use your preferred Neovim package manager. With
