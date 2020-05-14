@@ -292,7 +292,12 @@ function PDF:get_annotations()
             )
 
             if highlight_text_raw ~= ffi.NULL then
-              table.insert(highlight_text, ffi.string(highlight_text_raw))
+              local original_text = ffi.string(highlight_text_raw)
+              -- Each quadrilateral seems to correspond to a single line of text, so we can assume
+              -- that newlines are erroneous within a single quad's text
+              local clean_text, total_matches = string.gsub(original_text, '\n', ' ')
+              local correct_text = (total_matches > 0) and clean_text or original_text
+              table.insert(highlight_text, correct_text)
             end
           end
 
