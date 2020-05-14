@@ -61,12 +61,12 @@ PRs and issues (bugs and feature requests) are welcome!
 
 Help is welcome with any of the below! Otherwise, I'll get to them as I have time
 
-- [] Reimplement template engine in Lua, make easier to use
-- [] Reimplement note initialization/update in Lua
-- [] Refactor `pdfscribe` module to separate interface and implementation
-- [] Allow easier customization of note sorting
-- [] Allow easier customization of note grouping
-- [] Allow multiple PDF directories/search paths
-- [] Allow multiple note directories/search paths
-- [] Add support for ink annotations
-- [] Add more formatting options: line wrapping, indent matching, etc.
+- [ ] Reimplement template engine in Lua, make easier to use
+- [ ] Reimplement note initialization/update in Lua
+- [ ] Refactor `pdfscribe` module to separate interface and implementation
+- [ ] Allow easier customization of note sorting
+- [ ] Allow easier customization of note grouping
+- [ ] Allow multiple PDF directories/search paths
+- [ ] Allow multiple note directories/search paths
+- [ ] Add support for ink annotations
+- [ ] Add more formatting options: line wrapping, indent matching, etc.
