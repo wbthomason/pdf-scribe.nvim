@@ -38,7 +38,7 @@ endif
 if !exists('g:pdfscribe_file_template') && !(exists('g:pdfscribe_file_formatter') && type(g:pdfscribe_file_formatter) == v:t_func)
   let g:pdfscribe_file_template =<< trim END
 # ${title}
-${+author:(${author})+}
+${+author:${author}+}
 @${file_name}
 ${+keywords:Keywords: ${keywords}+}
 
