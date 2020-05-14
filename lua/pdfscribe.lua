@@ -32,6 +32,19 @@ local glib = ffi.load('libgobject-2.0.so')
 
 local PDF = {}
 
+local function page_then_date_order(a, b)
+  local a_page = a.page_idx
+  local a_date = a.mod_date
+  local b_page = b.page_idx
+  local b_date = b.mod_date
+
+  if a_page == b_page then
+    return a_date < b_date
+  end
+
+  return a_page < b_page
+end
+
 local function try_open(pdf_file_path)
   if pdf_file_path == nil then
     log_error('Nil PDF path!')
@@ -299,6 +312,7 @@ function PDF:get_annotations()
     poppler.poppler_page_free_annot_mapping(_annot_mappings)
   end
 
+  table.sort(annots, page_then_date_order)
   self.pdf_annotations = annots
   return self.pdf_annotations
 end
