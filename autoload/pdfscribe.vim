@@ -34,7 +34,7 @@ endfunction
 
 function! s:substitute_string_data(data, match_info) abort
   let l:datum = get(a:data, a:match_info[1])
-  if type(l:datum) == v:t_string 
+  if type(l:datum) == v:t_string
     return l:datum
   endif
 
@@ -133,6 +133,10 @@ function! s:template_note(_, annotation) abort
   return s:apply_template(g:pdfscribe_note_template, a:annotation)
 endfunction
 
+function! s:template_link(_, link) abort
+  return s:apply_template(g:pdfscribe_link_template, a:link)
+endfunction
+
 function! pdfscribe#init_notes(pdf_name) abort
   if a:pdf_name ==# ''
     " If no argument was given, assume the paper is named the same thing as the current buffer
@@ -167,8 +171,26 @@ function! pdfscribe#init_notes(pdf_name) abort
     let l:formatted_notes = l:flattened_notes
   endif
 
+  if has_key(l:pdf_info, 'links')
+    if exists('g:pdfscribe_link_formatter') && type(g:pdfscribe_link_formatter) == v:t_func
+      let l:formatted_links = call(g:pdfscribe_link_formatter, l:pdf_info['links'])
+    else
+      let l:formatted_links = map(copy(l:pdf_info['links']), function('s:template_link'))
+      " Now flatten the nested list
+      let l:flattened_links = []
+      for link in l:formatted_links
+        call extend(l:flattened_links, link)
+      endfor
+
+      let l:formatted_links = l:flattened_links
+    endif
+    
+    call extend(l:pdf_info, {'formatted_links': l:formatted_links})
+  endif
+
   if exists('g:pdfscribe_file_formatter') && type(g:pdfscribe_file_formatter) == v:t_func
-    let l:formatted_contents = call(g:pdfscribe_file_formatter, [l:pdf_info, l:formatted_notes])
+    call extend(l:pdf_info, {'formatted_notes': l:formatted_notes})
+    let l:formatted_contents = call(g:pdfscribe_file_formatter, l:pdf_info)
   else
     let l:formatted_contents = s:template_file(l:pdf_info, l:formatted_notes)
   endif

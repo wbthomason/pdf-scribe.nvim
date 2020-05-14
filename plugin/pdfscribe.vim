@@ -54,6 +54,10 @@ ${+links:${links}+}
 END
 endif
 
+if !exists('g:pdfscribe_link_template') && !(exists('g:pdfscribe_link_formatter') && type(g:pdfscribe_link_formatter) == v:t_func)
+  let g:pdfscribe_link_template = ['- ${+title:${title}: +}${dest}']
+endif
+
 command! -nargs=? -complete=customlist,pdfscribe#complete_pdf_files PdfScribeInit call pdfscribe#init_notes(<q-args>)
 command! -nargs=? -complete=customlist,pdfscribe#complete_notes_files PdfScribeUpdateNotes call pdfscribe#update_notes(<q-args>)
 
