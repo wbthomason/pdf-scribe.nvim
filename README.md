@@ -2,6 +2,8 @@
 
 A Neovim plugin for importing annotations and metadata from PDFs
 
+[[_TOC_]]
+
 ## Dependencies
 
 You will need `LuaJIT` (if you're using this with Neovim, it's baked in), `poppler-glib`, `GObject`,
@@ -44,6 +46,13 @@ The only values you **must** configure are `g:pdfscribe_pdf_dir` and `g:pdfscrib
 set the directory in which `pdfscribe` looks for your PDF files and for your notes files,
 respectively. See [the docs](docs/pdfscribe.txt) for more complete information.
 
+## Contributing
+
+PRs and issues (bugs and feature requests) are welcome!
+
 ## Notes
-Incidentally, the core PDF library only depends on Neovim for checking if files exist. The rest of
-it is portably reusable in any LuaJIT environment.
+- The core PDF library only depends on Neovim for checking if files exist. The rest of it is
+  portably reusable in any LuaJIT environment.
+- As the LuaJIT module is a wrapper around a C library, bugs may cause segfaults. Bug reports for
+  segfault bugs are **particularly** welcomed.
+- This plugin may eat your files, lunch, and/or car.
