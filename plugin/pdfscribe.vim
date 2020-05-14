@@ -28,7 +28,7 @@ endif
 
 if !exists('g:pdfscribe_note_template') && !(exists('g:pdfscribe_note_formatter') && type(g:pdfscribe_note_formatter) == v:t_func)
   let g:pdfscribe_note_template =<< trim END
-- *(Page ${page})*${-selected_text: ${contents}-}${+selected_text::+}
+- *(Page ${page}, ${modified})*${-selected_text: ${contents}-}${+selected_text::+}
 ${+selected_text:  > ${selected_text}+}
 ${+selected_text&contents:  ${contents}+}
 
