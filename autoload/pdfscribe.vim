@@ -95,7 +95,7 @@ function! s:apply_template(template, data) abort
     " NOTE: This is only valid b/c more than one list item on a line doesn't make sense in a
     " template
     let [_, key; _] = matchlist(l:tpl[data_field_idx], s:data_field_pattern)
-    let l:replacement = a:data[key]
+    let l:replacement = get(a:data, key, '')
     if !empty(l:replacement)
       let l:replacement[0] = l:prefix . l:replacement[0]
       call extend(l:result, l:replacement)
