@@ -1,0 +1,343 @@
+*pdfscribe.txt*        Extract PDF information and annotations to plain-text notes
+*pdfscribe.nvim*
+*pdf-scribe.nvim*
+
+Author: Wil Thomason <wil.thomason@gmail.com>
+
+CONTENTS                                        *pdfscribe-contents*
+Introduction                                    |pdfscribe-introduction|
+  Requirements                                  |pdfscribe-intro-requirements|
+  Features                                      |pdfscribe-intro-features|
+Usage                                           |pdfscribe-usage|
+Configuration                                   |pdfscribe-configuration|
+Templating                                      |pdfscribe-templating|
+  Substitution variables                        |pdfscribe-templating-variables|
+  Conditional substitution                      |pdfscribe-templating-conditionals|
+Commands                                        |pdfscribe-commands|
+Changelog                                       |pdfscribe-changelog|
+Contributing                                    |pdfscribe-contributing|
+Credits                                         |pdfscribe-credits|
+==============================================================================
+INTRODUCTION                                    *pdfscribe-introduction*
+
+This is a Neovim plugin for extracting and formatting information (title, list
+of authors, list of keywords, list of external links) and annotations
+(highlights, underlines, and pop-up notes) from PDF files for use in creating
+plain-text notes.
+
+This file documents said Neovim plugin - however, the plugin uses a LuaJIT
+library of the same name which is designed to be used independently to make
+other PDF tools.
+
+==============================================================================
+REQUIREMENTS                                     *pdfscribe-intro-requirements*
+
+This plugin has been developed on Linux. It might work on macOS, but isn't
+guaranteed to. It will almost certainly not work on Windows. Help testing
+on/expanding to other OSes is welcome!
+
+This plugin has been developed and tested using Neovim@da6f38a (post v0.4.3,
+pre v0.4.4). It should work with Neovim versions after v0.4.3, but this has
+not been verified - again, help testing is welcome!
+
+|pdfscribe.nvim| works by wrapping parts of `poppler-glib`. As such, it
+requires the following external dependencies:
+
+- LuaJIT (baked into Neovim)
+- `poppler-glib `(for all PDF manipulation features)
+- `GObject `(utility functions required for `poppler-glib`)
+- `GLib `(utility functions required for `poppler-glib`)
+
+==============================================================================
+FEATURES                                         *pdfscribe-intro-features*
+
+- Extract PDF information:
+  - Title
+  - List of authors
+  - List of keywords
+  - List of external links
+- Extract PDF annotations:
+  - Types:
+    - Highlights
+    - Underlines
+    - Pop-up notes
+  - Information:
+    - Selected text
+    - Note contents
+    - Modification date
+- Format PDF information to plain-text notes:
+  - Simple conditional substitution templating
+  - Generate notes file from template
+  - Update annotations in existing notes file
+
+==============================================================================
+USAGE                                            *pdfscribe-usage*
+
+Basic usage of the plugin requires (1) customizing |g:pdfscribe_pdf_dir| and
+|g:pdfscribe_notes_dir| (and any of the other variables in
+|pdfscribe-configuration|) to match your setup and (2) using the
+|PdfScribeInit| and |PdfScribeUpdateNotes| commands.
+
+More advanced usage is recommended to build directly from the `pdfscribe`
+LuaJIT module.
+
+==============================================================================
+CONFIGURATION                                    *pdfscribe-configuration*
+
+*g:pdfscribe_pdf_dir*
+A string describing the absolute path to the directory holding your PDF files.
+Will be passed to |expand()| before use.
+
+Default: `'~/Downloads'`
+
+*g:pdfscribe_notes_dir*
+A string describing the absolute path to the directory holding your notes
+files. Will be passed to |expand()| before use.
+
+Default: `'~/notes'`
+
+*g:pdfscribe_notes_extension*
+A string describing the extension for your notes files.
+
+Default: `'md'`
+
+*g:pdfscribe_notes_marker*
+A string describing the pattern in your notes files that designates the start
+of the section containing your extracted annotations. Used during template
+application by |PdfScribeInit| and used to find the start of the text region
+to replace by |PdfScribeUpdateNotes|.
+
+Default: `'## Notes'`
+
+*g:pdfscribe_notes_end_marker*
+A string describing the pattern in your notes files that designates the end
+of the section containing your extracted annotations. Used during template
+application by |PdfScribeInit| and used to find the end of the text region
+to replace by |PdfScribeUpdateNotes| (EOF is used if the marker is not found).
+
+Default: `'## Links'`
+
+*g:pdfscribe_date_format*
+A string describing the format you would like `pdfscribe.nvim` to use for
+dates in your notes files. Passed to |strftime()|; must be a valid format
+string for the same.
+
+Default: `'%y/%m/%d'`
+
+*g:pdfscribe_note_template*
+A list of strings describing the lines of a template for an extracted
+annotation entry. Must adhere to the template format described in
+|pdfscribe-templating|. Used only if |g:pdfscribe_note_formatter| is not
+defined.
+
+Default: >
+  let g:pdfscribe_note_template =<< trim END
+  - *(Page ${page})*${-selected_text: ${contents}-}${+selected_text::+}
+  ${+selected_text:  > ${selected_text}+}
+  ${+selected_text&contents:  ${contents}+}
+  
+  END
+
+*g:pdfscribe_file_template*
+A list of strings describing the lines of a template for a new notes file.
+Must adhere to the template format described in |pdfscribe-templating|. Used
+only if |g:pdfscribe_file_formatter| is not defined.
+
+Default: >
+  let g:pdfscribe_file_template =<< trim END
+  # ${title}
+  ${+author:(${author})+}
+  @${file_name}
+  ${+keywords:Keywords: ${keywords}+}
+  
+  *Notes created: ${date}*
+  
+  ## Main Idea
+  
+  ${notes_marker}
+  ${notes}
+  ${+links:${notes_end_marker}+}
+  ${+links:''+}
+  ${+links:${links}+}
+  END
+
+*g:pdfscribe_link_template*
+A list of strings describing the lines of a template for an external link
+item. Must adhere to the template format described in |pdfscribe-templating|.
+Used only if |g:pdfscribe_link_formatter| is not defined.
+
+Default: >
+  let g:pdfscribe_link_template = ['- ${+title:${title}: +}${dest}']
+
+*g:pdfscribe_note_formatter*
+A |Funcref| that will, if defined, be used to format each annotation entry in
+your notes file. The function must take in a list of dictionaries describing
+annotations, with the structure: >
+  {
+    page_idx: Int,
+    page_label: String (if defined),
+    page: String if page_label was defined, Int equal to page_idx otherwise,
+    contents: String (if defined),
+    selected_text: String (if defined),
+    mod_date: String (raw PDF-format date string),
+    modified: String (mod_date formatted by Lua's `os.date` per `'%Y/%m/%d'`)
+  }
+
+The function must return a list of lists of formatted strings, to be used as
+lines.
+
+Default: Not defined
+
+*g:pdfscribe_file_formatter*
+A |Funcref| that will, if defined, be used to format a new notes file. The function must take in a dictionary of PDF information, with the structure: >
+  {
+    file: String (file path of PDF),
+    author: String (if defined), 
+    keywords: String (if defined),
+    title: String,
+    links: List (if defined) of dictionaries: { title: String (if defined), dest: String },
+    annotations: List of dictionaries structured per |g:pdfscribe_note_formatter|,
+    formatted_notes: List of strings,
+    formatted_links: List of strings (if defined)
+  }
+
+The function must return a list of formatted strings, to be used as lines.
+
+Default: Not defined
+
+*g:pdfscribe_link_formatter*
+A |Funcref| that will, if defined, be used to format each external link entry in
+your notes file. The function must take in a list of dictionaries describing
+links, with the structure: >
+  {
+    title: String (if defined),
+    dest: String
+  }
+
+The function must return a list of lists of formatted strings, to be used as
+lines.
+
+Default: Not defined
+
+==============================================================================
+TEMPLATING                                       *pdfscribe-templating*
+
+|pdfscribe.nvim| implements a very simple template system for generating notes
+files and note entries.
+
+Each template is a list of strings. Strings may contain substitution tokens. A
+substitution token may be conditional or unconditional. Unconditional
+substitution tokens are replaced with the value of the
+|pdfscribe-templating-variables| they specify; conditional substitution tokens
+will be replaced with the replacement they specify if the variables named
+in their condition are defined and non-empty.
+
+Unconditional substitution tokens use the syntax `${<variable name>}`;
+conditional substitution tokens use the syntax described in
+|pdfscribe-templating-conditionals|.
+
+NOTE: A template may have multiple substitution tokens in a single line if
+those tokens (or all but the last token) expand to strings. However, only a
+single substitution token that expands to a list of lines (e.g. the
+`${notes}` or `${contents`} tokens, etc.) is allowed on a single template
+line, and it must be at the end of the line.
+
+==============================================================================
+SUBSTITUTION VARIABLES                           *pdfscribe-templating-variables*
+
+The following substitution variables are defined:
+
+For note templates:
+- `page_idx`: the raw index of the page in the PDF containing the annotation
+- `page_label`: the label, if defined, of the page in the PDF containing the
+  annotation
+- `page`: `page_label` if it is defined, otherwise `page_idx`
+- `selected_text`: the text, if any, highlighted/underlined as an annotation
+- `contents`: the text, if any, entered as a note for an annotation
+- `mod_date`: the raw PDF date string at which the annotation was last
+  modified
+- `modified`: the date at which the annotation was last modified formatted
+  according to `'%Y/%m/%d'`
+
+For file templates:
+- `title`: the title of the PDF
+- `author`: the author(s) of the PDF, if defined
+- `file`: the absolute path to the PDF file
+- `file_name`: just the file name portion of the path to the PDF file
+- `keywords`: the keywords for the PDF, if defined
+- `date`: the current date
+- `notes_marker`: the value of |g:pdfscribe_notes_marker|
+- `notes_end_marker`: the value of |g:pdfscribe_notes_end_marker|
+- `notes`: the list of formatted note entries
+- `links`: the list of external links in the PDF, if defined
+
+For link templates:
+- `title`: the title of the link, if defined
+- `dest`: the destination of the link
+
+==============================================================================
+CONDITIONAL SUBSTITUTION                         *pdfscribe-templating-conditionals*
+
+A conditional substitution token uses the following syntax:
+
+For substitution only if the condition is met:
+`${+<condition>:<replacement>+}`
+
+For substitution only if the condition is not met:
+`${-<condition>:<replacement>-}`
+
+`<condition>` must be one or more |pdfscribe-templating-variables| separated
+by `&`. `<condition>` is true only if all the specified variables are defined
+in the template data dictionary and non-empty.
+
+`<replacement>` is any text. It may include unconditional substitution tokens,
+but no conditional substitution tokens.
+
+==============================================================================
+COMMANDS                                         *pdfscribe-commands*
+
+*PdfScribeInit* [pdf_file_name]
+  Create a new notes file for [pdf_file_name]. If [pdf_file_name] is not
+  given, the name of the PDF file is assumed to be the same as the name of the
+  current buffer, with the extension changed to `.pdf`. PDF file names are
+  relative to |g:pdfscribe_pdf_dir|, and the command has tab-completion for
+  PDFs in |g:pdfscribe_pdf_dir|. The command will apply
+  |g:pdfscribe_file_formatter| or |g:pdfscribe_file_template| (in that order)
+  to generate a notes file at the path defined by prepending
+  |g:pdfscribe_notes_dir| to [pdf_file_name] with extension
+  |g:pdfscribe_notes_extension|.
+
+*PdfScribeUpdateNotes* [pdf_file_name]
+  Update the extracted annotation notes for [pdf_file_name]. If
+  [pdf_file_name] is not given, the name of the PDF file is assumed to be the
+  same as the name of the current buffer, with the extension changed to
+  `.pdf`. PDF file names are relative to |g:pdfscribe_pdf_dir|, and the
+  command has tab-completion for PDFs in |g:pdfscribe_pdf_dir|. The command
+  will apply |g:pdfscribe_note_formatter| or |g:pdfscribe_note_template| (in
+  that order) to generate formatted annotation notes, then replace from
+  |g:pdfscribe_notes_marker| through to |g:pdfscribe_notes_end_marker| or EOF
+  (whichever comes first) in the file at the path defined by prepending
+  |g:pdfscribe_notes_dir| to [pdf_file_name] with extension
+  |g:pdfscribe_notes_extension| with the formatted notes. Said file must be an
+  initialized notes buffer per |PdfScribeInit|.
+
+==============================================================================
+CHANGELOG                                        *pdfscribe-changelog*
+
+2020-05-14                                       Initial creation
+
+==============================================================================
+CONTRIBUTING                                     *pdfscribe-contributing*
+
+Issue reports, feature requests,  and pull requests with bug fixes or feature
+additions are welcomed! Please use the tools for such at
+https://github.com/wbthomason/pdf-scribe.nvim.
+
+==============================================================================
+CREDITS                                          *pdfscribe-credits*
+
+`pdf-scribe.nvim` and the `pdfscribe` LuaJIT module are written and maintained
+by Wil Thomason
+
+==============================================================================
+vim:tw=78:ts=2:ft=help:norl
