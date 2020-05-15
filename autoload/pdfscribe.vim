@@ -122,10 +122,6 @@ function! s:template_file(pdf_info, formatted_notes) abort
     let l:data['notes_end_marker'] = g:pdfscribe_notes_end_marker
   endif
 
-  if has_key(l:data, 'keywords')
-    let l:data['keywords'] = ':' . join(l:data['keywords'], ':') . ':'
-  endif
-
   return s:apply_template(g:pdfscribe_file_template, l:data)
 endfunction
 
