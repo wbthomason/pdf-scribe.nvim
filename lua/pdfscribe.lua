@@ -105,10 +105,10 @@ function PDF:get_keywords()
     return nil
   end
 
-  local keywords_raw = poppler.poppler_document_get_keywords(self.pdf)
-  if keywords_raw ~= ffi.NULL then
-    self.pdf_keywords = ffi.string(keywords_raw)
-    glib.g_free(keywords_raw)
+  local keywords_bytes = poppler.poppler_document_get_keywords(self.pdf)
+  if keywords_bytes ~= ffi.NULL then
+    self.pdf_keywords = ffi.string(keywords_bytes)
+    glib.g_free(keywords_bytes)
   end
 
   return self.pdf_keywords
@@ -124,10 +124,10 @@ function PDF:get_author()
     return nil
   end
 
-  local author_raw = poppler.poppler_document_get_author(self.pdf)
-  if author_raw ~= ffi.NULL then
-    self.pdf_author = ffi.string(author_raw)
-    glib.g_free(author_raw)
+  local author_bytes = poppler.poppler_document_get_author(self.pdf)
+  if author_bytes ~= ffi.NULL then
+    self.pdf_author = ffi.string(author_bytes)
+    glib.g_free(author_bytes)
   end
 
   return self.pdf_author
@@ -143,10 +143,10 @@ function PDF:get_title()
     return nil
   end
 
-  local title_raw = poppler.poppler_document_get_title(self.pdf)
-  if title_raw ~= ffi.NULL then
-    self.pdf_title = ffi.string(title_raw)
-    glib.g_free(title_raw)
+  local title_bytes = poppler.poppler_document_get_title(self.pdf)
+  if title_bytes ~= ffi.NULL then
+    self.pdf_title = ffi.string(title_bytes)
+    glib.g_free(title_bytes)
   end
 
   return self.pdf_title
@@ -171,19 +171,17 @@ function PDF:get_external_links()
       local link_action = link_mapping.action
       if link_action.type == poppler.POPPLER_ACTION_URI then
         link_action = link_action.uri
-        local title_raw = link_action.title
         local action = { dest = ffi.string(link_action.uri) }
-        if title_raw ~= ffi.NULL then
-          action.title = ffi.string(title_raw)
+        if link_action.title ~= ffi.NULL then
+          action.title = ffi.string(link_action.title)
         end
 
         table.insert(links, action)
       elseif link_action.type == poppler.POPPLER_ACTION_GOTO_REMOTE then
         link_action = link_action.goto_remote
-        local title_raw = link_action.title
         local action = { dest = ffi.string(link_action.file_name) }
-        if title_raw ~= ffi.NULL then
-          action.title = ffi.string(title_raw)
+        if link_action.title ~= ffi.NULL then
+          action.title = ffi.string(link_action.title)
         end
 
         table.insert(links, action)
@@ -212,11 +210,11 @@ function PDF:get_annotations()
   local annots = {}
   local selection_rect = ffi.new('PopplerRectangle', { 0.0, 0.0, 0.0, 0.0 })
   for i, page in ipairs(pages) do
-    local page_label_raw = poppler.poppler_page_get_label(page)
+    local page_label_bytes = poppler.poppler_page_get_label(page)
     local page_label = nil
-    if page_label_raw ~= ffi.NULL then
-      page_label = ffi.string(page_label_raw)
-      glib.g_free(page_label_raw)
+    if page_label_bytes ~= ffi.NULL then
+      page_label = ffi.string(page_label_bytes)
+      glib.g_free(page_label_bytes)
     end
 
     local width = ffi.new('double[1]', 1.0)
@@ -242,10 +240,10 @@ function PDF:get_annotations()
         annotation_type == poppler.POPPLER_ANNOT_HIGHLIGHT or
         annotation_type == poppler.POPPLER_ANNOT_UNDERLINE
       then
-        local contents_raw = poppler.poppler_annot_get_contents(annotation_data)
-        if contents_raw ~= ffi.NULL then
-          annotation.contents = utils.split(ffi.string(contents_raw), '\n')
-          glib.g_free(contents_raw)
+        local contents_bytes = poppler.poppler_annot_get_contents(annotation_data)
+        if contents_bytes ~= ffi.NULL then
+          annotation.contents = utils.split(ffi.string(contents_bytes), '\n')
+          glib.g_free(contents_bytes)
         end
 
         if
@@ -300,18 +298,20 @@ function PDF:get_annotations()
           selection_rect.x2 = math.floor(bounds[2])
           selection_rect.y2 = math.floor(bounds[3] - end_y_offset)
 
-          local raw_selected_text = poppler.poppler_page_get_selected_text(page, poppler.POPPLER_SELECTION_WORD, selection_rect)
-          if raw_selected_text ~= ffi.NULL then
-            local original_text = ffi.string(raw_selected_text)
-            local clean_text, total_matches = string.gsub(original_text, '\n', ' ')
+          local selected_text_bytes = poppler.poppler_page_get_selected_text(page, poppler.POPPLER_SELECTION_WORD, selection_rect)
+          if selected_text_bytes ~= ffi.NULL then
+            local original_text = ffi.string(selected_text_bytes)
+            local clean_text, total_matches = string.gsub(original_text, '%s', ' ')
+            original_text = (total_matches > 0) and clean_text or original_text
+            clean_text, total_matches = string.gsub(original_text, '(%S)-%s(%S)', '%1%2')
             annotation.selected_text = (total_matches > 0) and clean_text or original_text
           end
         end
 
-        local mod_date_raw = poppler.poppler_annot_get_modified(annotation_data)
-        annotation.mod_date = ffi.string(mod_date_raw)
-        annotation.modified = clean_mod_date(mod_date_raw)
-        glib.g_free(mod_date_raw)
+        local mod_date_bytes = poppler.poppler_annot_get_modified(annotation_data)
+        annotation.mod_date = ffi.string(mod_date_bytes)
+        annotation.modified = clean_mod_date(mod_date_bytes)
+        glib.g_free(mod_date_bytes)
         table.insert(annots, annotation)
       end
 
