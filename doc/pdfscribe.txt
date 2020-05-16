@@ -16,7 +16,6 @@ Templating                                      |pdfscribe-templating|
 Commands                                        |pdfscribe-commands|
 Changelog                                       |pdfscribe-changelog|
 Contributing                                    |pdfscribe-contributing|
-Credits                                         |pdfscribe-credits|
 ==============================================================================
 INTRODUCTION                                    *pdfscribe-introduction*
 
@@ -332,12 +331,6 @@ CONTRIBUTING                                     *pdfscribe-contributing*
 Issue reports, feature requests,  and pull requests with bug fixes or feature
 additions are welcomed! Please use the tools for such at
 https://github.com/wbthomason/pdf-scribe.nvim.
-
-==============================================================================
-CREDITS                                          *pdfscribe-credits*
-
-`pdf-scribe.nvim` and the `pdfscribe` LuaJIT module are written and maintained
-by Wil Thomason
 
 ==============================================================================
 vim:tw=78:ts=2:ft=help:norl
