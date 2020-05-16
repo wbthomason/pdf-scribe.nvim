@@ -57,6 +57,14 @@ PRs and issues (bugs and feature requests) are welcome!
   segfault bugs are **particularly** welcomed.
 - This plugin may eat your files, lunch, and/or car.
 
+## Known issues
+
+- Poppler doesn't always agree with the highlight rectangles created by other PDF engines; this can
+  lead to slightly off text selection extraction
+- Highlights including mathematical symbols/other non-ASCII Unicode usually work, but sometimes get
+  chopped up weirdly due to how Poppler determines glyph inclusion in selection regions/maps symbols
+  to UTF-8 codepoints.
+
 ## TODO
 
 Help is welcome with any of the below! Otherwise, I'll get to them as I have time
