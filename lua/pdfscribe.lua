@@ -1,31 +1,9 @@
 -- Utility to extract PDF annotations and metadata for use in generating notes files
 -- TODO: Extract and parse references
 local ffi = require('ffi')
-local function log_error(msg)
-  io.stderr:write('[pdfscribe] ' .. msg .. '\n')
-end
-
-local function split(str, pat)
-  local result = {}
-  for elem in string.gmatch(str, '([^' .. pat .. ']+)') do
-    table.insert(result, elem)
-  end
-
-  return result
-end
-
-if vim then
-  local api = vim.api
-  log_error = function(msg)
-    api.nvim_command('echohl ErrorMsg')
-    api.nvim_command('echom "[pdfscribe] ' .. msg .. '"')
-    api.nvim_command('echohl None')
-  end
-
-  split = vim.fn.split
-end
-
 require('pdfscribe/cdefs')
+
+local utils = require('pdfscribe/utils')
 
 local poppler = ffi.load('poppler-glib')
 local glib = ffi.load('libgobject-2.0.so')
@@ -47,7 +25,7 @@ end
 
 local function try_open(pdf_file_path)
   if pdf_file_path == nil then
-    log_error('Nil PDF path!')
+    utils.log_error('Nil PDF path!')
     return nil
   end
 
@@ -64,14 +42,14 @@ local function try_open(pdf_file_path)
   end
 
   if pdf_file_uri == ffi.NULL then
-    log_error(ffi.string(err[0].message))
+    utils.log_error(ffi.string(err[0].message))
     return nil
   end
 
   local pdf = poppler.poppler_document_new_from_file(pdf_file_uri, ffi.NULL, err)
   glib.g_free(pdf_file_uri)
   if pdf == ffi.NULL then
-    log_error(ffi.string(err[0].message))
+    utils.log_error(ffi.string(err[0].message))
     return nil
   end
 
@@ -83,7 +61,7 @@ end
 local function clean_mod_date(mod_date)
   local datetime = ffi.new('int[1]', 0)
   if not poppler.poppler_date_parse(mod_date, datetime) then
-    log_error('Failed to parse modified date string!')
+    utils.log_error('Failed to parse modified date string!')
     return nil
   end
 
@@ -101,7 +79,7 @@ function PDF:get_pages()
   end
 
   if self.pdf == nil then
-    log_error('No PDF loaded!')
+    utils.log_error('No PDF loaded!')
     return nil
   end
 
@@ -123,7 +101,7 @@ function PDF:get_keywords()
   end
 
   if self.pdf == nil then
-    log_error('No PDF loaded!')
+    utils.log_error('No PDF loaded!')
     return nil
   end
 
@@ -142,7 +120,7 @@ function PDF:get_author()
   end
 
   if self.pdf == nil then
-    log_error('No PDF loaded!')
+    utils.log_error('No PDF loaded!')
     return nil
   end
 
@@ -161,7 +139,7 @@ function PDF:get_title()
   end
 
   if self.pdf == nil then
-    log_error('No PDF loaded!')
+    utils.log_error('No PDF loaded!')
     return nil
   end
 
@@ -266,7 +244,7 @@ function PDF:get_annotations()
       then
         local contents_raw = poppler.poppler_annot_get_contents(annotation_data)
         if contents_raw ~= ffi.NULL then
-          annotation.contents = split(ffi.string(contents_raw), '\n')
+          annotation.contents = utils.split(ffi.string(contents_raw), '\n')
           glib.g_free(contents_raw)
         end
 
