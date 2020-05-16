@@ -244,6 +244,8 @@ function PDF:get_annotations()
     local width = ffi.new('double[1]', 1.0)
     local height = ffi.new('double[1]', 1.0)
     poppler.poppler_page_get_size(page, width, height)
+    width = width[0]
+    height = height[0]
 
     local _annot_mappings = poppler.poppler_page_get_annot_mapping(page)
     local annot_mappings = _annot_mappings
@@ -254,6 +256,7 @@ function PDF:get_annotations()
         page_label = page_label,
         page = page_label and page_label or i
       }
+
       local annotation_data = annot_mapping.annot
       local annotation_type = poppler.poppler_annot_get_annot_type(annotation_data)
       if
@@ -274,34 +277,57 @@ function PDF:get_annotations()
           local highlight_quads_array = poppler.poppler_annot_text_markup_get_quadrilaterals(
             ffi.cast('PopplerAnnotTextMarkup*', annotation_data))
 
-          local highlight_text = {}
           local highlight_quads = ffi.cast(
             'PopplerQuadrilateral*',
             ffi.cast('void*', highlight_quads_array.data))
 
-          for j=1,highlight_quads_array.len do
-            local quad = highlight_quads[j - 1]
-            selection_rect.x1 = quad.p1.x
-            selection_rect.y1 = height[0] - quad.p4.y
-            selection_rect.x2 = quad.p4.x
-            selection_rect.y2 = height[0] - quad.p1.y
-            local highlight_text_raw = poppler.poppler_page_get_selected_text(
-              page,
-              poppler.POPPLER_SELECTION_WORD,
-              selection_rect
-            )
+          local rect = ffi.new('PopplerRectangle', { 0.0, 0.0, 0.0, 0.0 })
+          local bounds = ffi.new('double[4]', {width, height, 0.0, 0.0})
+          local start_y_offset = 0.0
+          local end_y_offset = 0.0
+          for j = 0, highlight_quads_array.len - 1 do
+            local quad_data = highlight_quads[j]
+            rect.x1 = quad_data.p1.x
+            rect.y1 = height - quad_data.p1.y
+            rect.x2 = quad_data.p4.x
+            rect.y2 = height - quad_data.p4.y
 
-            if highlight_text_raw ~= ffi.NULL then
-              local original_text = ffi.string(highlight_text_raw)
-              -- Each quadrilateral seems to correspond to a single line of text, so we can assume
-              -- that newlines are erroneous within a single quad's text
-              local clean_text, total_matches = string.gsub(original_text, '\n', ' ')
-              local correct_text = (total_matches > 0) and clean_text or original_text
-              table.insert(highlight_text, correct_text)
+            -- The bounds need to be a selection rectangle: starting in the uppermost, leftmost
+            -- point, and moving to the lowest, rightmost point
+            local highest_possible = math.floor(rect.y1)
+            if
+              highest_possible < math.floor(bounds[1]) or
+              (highest_possible == math.floor(bounds[1]) and
+              math.floor(rect.x1) < math.floor(bounds[0]))
+            then
+              bounds[0] = rect.x1
+              bounds[1] = rect.y1
+              start_y_offset = (rect.y2 - rect.y1) / 2.0
+            end
+
+            local lowest_possible = math.ceil(rect.y2)
+            if
+              lowest_possible > math.ceil(bounds[3]) or
+              (lowest_possible == math.ceil(bounds[3]) and
+              math.ceil(rect.x2) > math.ceil(bounds[3]))
+            then
+              bounds[2] = rect.x2
+              bounds[3] = rect.y2
+              end_y_offset = (rect.y2 - rect.y1) / 2.0
             end
           end
 
-          annotation.selected_text = table.concat(highlight_text, ' ')
+          selection_rect.x1 = math.ceil(bounds[0])
+          selection_rect.y1 = math.ceil(bounds[1] + start_y_offset)
+          selection_rect.x2 = math.floor(bounds[2])
+          selection_rect.y2 = math.floor(bounds[3] - end_y_offset)
+
+          local raw_selected_text = poppler.poppler_page_get_selected_text(page, poppler.POPPLER_SELECTION_WORD, selection_rect)
+          if raw_selected_text ~= ffi.NULL then
+            local original_text = ffi.string(raw_selected_text)
+            local clean_text, total_matches = string.gsub(original_text, '\n', ' ')
+            annotation.selected_text = (total_matches > 0) and clean_text or original_text
+          end
         end
 
         local mod_date_raw = poppler.poppler_annot_get_modified(annotation_data)
