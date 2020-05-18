@@ -180,7 +180,7 @@ function! pdfscribe#init_notes(pdf_name) abort
 
       let l:formatted_links = l:flattened_links
     endif
-    
+
     let l:pdf_info.raw_links = l:pdf_info.links
     let l:pdf_info.links = l:formatted_links
   endif
@@ -224,6 +224,7 @@ function! pdfscribe#update_notes(file_name) abort
   let l:notes_section_line = search(g:pdfscribe_notes_marker, 'csw')
   if exists('g:pdfscribe_notes_end_marker')
     let l:notes_section_end_line = search(g:pdfscribe_notes_end_marker, 'cw')
+    let l:notes_section_end_line = l:notes_section_end_line - 1
     if l:notes_section_end_line < l:notes_section_line
       let l:notes_section_end_line = -1
     endif
