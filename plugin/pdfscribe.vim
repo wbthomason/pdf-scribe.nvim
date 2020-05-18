@@ -49,7 +49,7 @@ ${+keywords:Keywords: ${keywords}+}
 ${notes_marker}
 ${notes}
 ${+links:${notes_end_marker}+}
-${+links:''+}
+${+links:+}
 ${+links:${links}+}
 END
 endif

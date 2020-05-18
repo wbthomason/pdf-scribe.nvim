@@ -181,7 +181,8 @@ function! pdfscribe#init_notes(pdf_name) abort
       let l:formatted_links = l:flattened_links
     endif
     
-    call extend(l:pdf_info, {'formatted_links': l:formatted_links})
+    let l:pdf_info.raw_links = l:pdf_info.links
+    let l:pdf_info.links = l:formatted_links
   endif
 
   if exists('g:pdfscribe_file_formatter') && type(g:pdfscribe_file_formatter) == v:t_func
