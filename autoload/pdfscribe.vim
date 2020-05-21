@@ -137,13 +137,13 @@ function! pdfscribe#init_notes(pdf_name) abort
   if a:pdf_name ==# ''
     " If no argument was given, assume the paper is named the same thing as the current buffer
     let l:pdf_name = expand('%:t:r') . '.pdf'
-    let l:notes_path = expand('%:p')
   else
-    let l:pdf_name = a:pdf_name
-    let l:notes_path = printf('%s/%s.%s', g:pdfscribe_notes_dir, fnamemodify(l:pdf_name, ':r'), g:pdfscribe_notes_extension)
+    let l:pdf_name = expand(a:pdf_name)
   endif
 
-  let l:pdf_path = expand(printf('%s/%s', g:pdfscribe_pdf_dir, l:pdf_name))
+  " If we were given an existing file, just keep the path
+  let l:pdf_path = filereadable(l:pdf_name) ? l:pdf_name : expand(printf('%s/%s', g:pdfscribe_pdf_dir, l:pdf_name))
+  let l:notes_path = printf('%s/%s.%s', g:pdfscribe_notes_dir, fnamemodify(l:pdf_path, ':t:r'), g:pdfscribe_notes_extension)
   let l:pdf_info = luaeval("require('pdfscribe').get_all_info(_A)", l:pdf_path)
   if empty(l:pdf_info)
     echohl WarningMsg
